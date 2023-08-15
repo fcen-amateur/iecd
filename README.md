@@ -17,3 +17,11 @@ Las clases se darán en el Edificio 0+oo
 ## Links útiles
 - [Campus de la materia](https://campus.exactas.uba.ar/course/view.php?id=3786)
 - [Canal de Discord de la materia](https://discord.gg/jeFnp5Tk)
+
+## Aprendiendo R
+https://datos.gob.es/es/noticia/cursos-para-aprender-mas-sobre-r
+https://www.datacamp.com/courses/free-introduction-to-r
+https://es.r4ds.hadley.nz/01-intro.html // https://r4ds.had.co.nz/
+https://kschool.com/blog/data-science/recursos-para-aprender-a-programar-en-r-por-tu-cuenta/
+https://rstudio-education.github.io/hopr/
+
