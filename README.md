@@ -19,9 +19,13 @@ Las clases se darán en el Edificio 0+oo
 - [Canal de Discord de la materia](https://discord.gg/jeFnp5Tk)
 
 ## Aprendiendo R
+https://cran.r-project.org/doc/contrib/R-intro-1.1.0-espanol.1.pdf
 https://datos.gob.es/es/noticia/cursos-para-aprender-mas-sobre-r
 https://www.datacamp.com/courses/free-introduction-to-r
 https://es.r4ds.hadley.nz/01-intro.html // https://r4ds.had.co.nz/
 https://kschool.com/blog/data-science/recursos-para-aprender-a-programar-en-r-por-tu-cuenta/
 https://rstudio-education.github.io/hopr/
 
+## R para el siglo XXI
+- [radian](https://github.com/randy3k/radian), una consola de R para el siglo XXI
+- [IRkernel](https://irkernel.github.io/), un _kernel_ de R para Jupyter
