@@ -1,0 +1,96 @@
+---
+title: 'IECD 2C2023: Entrega 1'
+author: "Gonzalo Barrera, Ana Bianco, Pedro Cosatto"
+date: "2023-09-06"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Estimación No Paramétrica de la densidad: elección de la ventana 
+
+### Fecha de Entrega: Viernes 15 de Septimbre 23:59 hs
+
+*Este TP se relizará en grupos de dos personas. Se debe entregar un archivo tipo .Rmd con lo comandos y un informe (que puede ser el mismo .Rmd renderizado a PDF o HTML) con los resultados. Los dos archivos que se entreguen deben contener en el nombre los apellidos de los dos integrantes del grupo.*
+
+
+## (90 ptos.) Selección de ventana $h$ por convalidación cruzada "deje-uno-afuera"
+
+El objetivo de este ejercicio es implementar una función que seleccione la ventana $h$ del estimador de densidad por núcleo gaussiano univariado, maximizando una pseudo–verosimilutd computada sacando de los datos una observación a la vez (leave–one–out cross–validation). Recordemos, que si observamos los datos $x_1,\dots,x_n$, la ventana de log-verosimiltud por convalidación cruzada la calculamos como
+
+$$
+h^{*}_{CV} = \arg \max_{h\in H} \left(\frac{1}{n}\sum_{i=1}^n\log \hat{f}^{(-i)}_h(x_i)\right)\ ,\text{donde}\\
+\hat{f}^{(-i)}_h(x_i) = \frac{1}{(n-1)h}\sum_{j\ne i}K\left(\frac{x_i-x_j}{h}\right)
+$$
+
+1. (5 ptos.) Cree una función `bw.loocv` (en el estilo de `bw.nrd, bw.ucv` et al), que dependa de dos parámetros:
+    -  datos `x` que provengan de una muestra i.i.d. de una variable aleatoria univariada $X$, 
+    - `grilla.h`, una secuencia de valores de ventana a probar, opcionalmente vacía.
+2. (20 ptos.) Para el caso en que la función `bw.loocv` se llama sin valor del parámetro `grilla.h`, asígnele una secuencia de 100 elementos, que cubra un rango de dos órdenes de magnitud alrededor del estimador de Silverman (ver `bw.nrd0`)
+3. (20 ptos.) Escriba un for-loop donde, para cada valor de `grilla.h`,
+    a. Para cada índice `i` entre 1 y `length(x)`, genere $\log\hat{f}^{(-i)}_h$, evalúelo en $x_i$ y guarde el resultado.
+    b. Compute el promedio de los valores den (a), que llamaremos $\hat{l}_{h,CV}$.
+4. (15 ptos.) Devuelva una lista con tres elementos:
+    - `h.CV`, el valor de `grilla.h` que maximiza la pseudo-logverosimilitud en `x`, 
+    - la retícula  `grilla.h` donde maximiza la pseudo-logverosimilitud, 
+    - `loglikes`, los promedio de las log-verosimilitudes calculados en (3) para cada elemento de `grilla.h`.
+5. Cargue la muestra provista en `entrega1.txt` ( o directamente con `X <- muestra(1234)`). Trabajaremos con una grilla de ventanas entre 0.1 y 1 con paso 0.01 y usando `bw.loocv`, genere los siguientes dos gráficos:
+    a. (15 ptos.) Un gráfico de los valores de log-verosimilitud promedio para cada valor de `grilla.h`, incluyendo líneas de referencia para el `h.CV` de `bw.loocv`, junto con los $h$ sugeridos por Silverman (1986), Sheather & Jones (1991) y VC insesgada de R (`bw.nrd0, bw.SJ, bw.ucv`, respectivamente).
+    b. (15 ptos.) Un gráfico de densidad de `x`, superponiendo las $\hat{f}_{h^{*}_M}$, donde $M\in \{\text{loocv, nrd0, SJ, ucv}\}$
+  
+## (0 ptos.) BONUS: Regla de un error estándar
+
+Al estimar la log-verosimilitud por validación cruzada $\hat{l}_{h,CV}$, obtenemos un _conjunto_ de estimadores de $l$, que a su vez se puede usar para aproximar la distribución del estimador. Así, si varios valores de `h` dan aproximadamente la misma $\hat{l}_{h,CV}$, preferiremos aquél $h$ que resulte en la estimación más "parsimoniosa" o suave. Para el estimador de densidad por núcleos, esto puede interpretarse como el del $h$ más grande, que resulta en una densidad estimada más suave.
+
+Exploraremos el siguiente método de selección.
+
+
+Referencia: [ESL, sección 7.10.1](https://hastie.su.domains/ElemStatLearn/printings/ESLII_print12_toc.pdf)
+
+6. Reescriba la función `bw.loocv`, de manera que
+    a. tome como argumento extra el número de errores estándares `n.se`, y a partir de él
+    b. compute y devuelva `h.CV` y `loglikes` $\hat{l}_{h,CV}$  justo como antes, pero además
+        - `loglikes.se`, el error estándar de las log-verosimilitudes computadas por convalidación cruzada LOO, que notaremos $SE$, y
+        - `h.nSE` definido como el máximo `h` dentro de `grilla.h` tal que su promedio de `loglike` sea por lo menos $\hat{l}_{h.CV} - \text{n.se} \times SE(\hat{l}_{h.CV})/\sqrt{n}$.
+  
+7. Usando el retorno de esta nueva `bw.loocv`, grafique $\hat{l}_{h.CV}$ para la `grilla.h`, junto con líneas de error de $\text{n.se}$ errores estándares, y las ventanas $h$ correspondientes a $\text{n.se}\in\{0,1,2\}$.
+    - ¿Qué efecto tienen estas ventanas en la estimación?
+
+Referencia: [notas de Tibshirani](https://www.stat.cmu.edu/~ryantibs/datamining/lectures/19-val2-marked.pdf)
+  
+
+**Abajo damos un bosquejo de la función a programar y el método generador de los datos como base. Esperamos les resulte de utilidad.**
+
+
+```{r}
+bw.loocv <- function(x, grilla.h=NA) {
+  if (any(is.na(grilla.h))) {
+    grilla.h <- NA # COMPLETE AQUI
+  }
+  n.h <- length(grilla.h)
+  n.x <- length(x)
+  loglikes <- rep(NA, n.h)
+  for(j in 1:n.h) {
+    h <- grilla.h[j]
+    for (i in 1:n.x) {
+      # COMPLETE AQUI
+    }
+  }
+  return(list(h.opt=NA, loglikes=NA))
+}
+
+muestra <- function(seed, n=200) {
+  set.seed(1234)
+  binoms <- rbinom(n, size=1, p=0.75)
+  return (
+    binoms * rnorm(n, mean=0, sd=1)
+    + (1 - binoms) * rnorm(n, mean=3.25, sd=sqrt(0.5))
+  )
+}
+write.table(muestra(1234), "entrega1.txt", row.names=FALSE, col.names=FALSE)
+```
