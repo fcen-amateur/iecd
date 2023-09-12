@@ -27,6 +27,9 @@ length(t2)
 
 # Agrego curva normal al histograma
 hist(GRUPO1)
+xs <- seq(-4, 4, length.out=100)
+plot(x=xs, y=dnorm(xs), type="l")
+curve(dnorm, from=-4, to=4)
 curve(dnorm(x, mean = mean(GRUPO1), sd = sd(GRUPO1)), add = TRUE, col = "blue")
 ?hist
 hist(GRUPO1, freq=FALSE)
@@ -66,10 +69,12 @@ stopifnot(identical(grupos, grupos_bis))
 
 for (key in names(grupos)) {
   value <- grupos[[key]]
+  normalizado <- (value - mean(value)) / sd(value)
   qqnorm(value, main = key)
   qqline(value, col = "red")
 }
-
+qnorm(seq.int(5)/5)
+qnorm((seq.int(5) - 0.5)/5)
 # Con ggplot2
 # Load the ggplot2 package
 library(ggplot2)
@@ -78,16 +83,27 @@ ggplot(data.frame(sample = GRUPO1), aes(sample = sample)) +
   stat_qq() +
   stat_qq_line(color="red")
 
-
-
+GRUPO1 <- GRUPO1 + runif(n=length(GRUPO1), min=-0.005, max=0.005)
 # Y a mano?
 GRUPO1_ordenado <- sort(GRUPO1)
 
 n <- length(GRUPO1)
 cuantiles <- qnorm((seq_len(n) - 0.5)/ n)
 dnorm(cuantiles)
+par(mfrow=c(1,2))
 plot(cuantiles, GRUPO1_ordenado, main = "A mano")
 qqnorm(GRUPO1, main = "Con qqnorm")
 qqline(GRUPO1, col = "red")
+
+GRUPO1 <- runif(n=2000)
+GRUPO1_ordenado <- sort(GRUPO1)
+
+n <- length(GRUPO1)
+cuantiles <- qnorm((seq_len(n) - 0.5)/ n)
+dnorm(cuantiles)
+par(mfrow=c(1,2))
+plot(cuantiles, GRUPO1_ordenado, main = "A mano")
+qqplot(GRUPO1, GRUPO2, main = "Con qqnorm")
+qqline(GRUPO1, GRUPO2, col = "red")
 
 # Tarea para el hogar: cómo agregarían la qqline a mano?

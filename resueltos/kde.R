@@ -7,10 +7,11 @@ triangular <- function(x) {
   (1 - abs(x)) * ind(x, -1, 1)
 }
 
-xs <- seq(from = -2, to = 2, length.out = 200)
+xs <- seq(from = -1.5, to = 1.5, length.out = 200)
 
 triangular(xs)
 plot(xs, triangular(xs), type = "l")
+curve(triangular, from=-2, to=2)
 
 gaussiano <- function(x) {
   dnorm(x, mean = 0, sd = 1)
@@ -37,25 +38,35 @@ nucleos <- list(
 par(mfrow = c(2, 2))
 
 for (nombre in names(nucleos)) {
-  plot(xs, nucleos[[nombre]](xs), type = "l")
+  K <- nucleos[[nombre]]
+  plot(xs, K(xs), type = "l", main=nombre)
   # curve(K, from = -2, to = 2)
 }
 
-attach(cars)
-dens <- density(speed)
-dens(xs)
-
-kde <- function(xs, datos, h = 1, nucleo = "gaussiano") {
-  n <- length(datos)
-  m <- length(xs)
-  K <- nucleos[[nucleo]]
-  fs <- vector(length=m)
-  for (i in seq.int(m)) {
-    fs[i] <- sum(K((xs[i] - datos) / h))
+hacer_kde <- function(datos, h = 1, nucleo = "gaussiano") {
+  kde <- function(xs) {
+    n <- length(datos)
+    K <- nucleos[[nucleo]]
+    m <- length(xs)
+    fs <- vector(length=m)
+    for (i in seq.int(m)) {
+      fs[i] <- sum(K((xs[i] - datos) / h)) / (n * h)
+    }
+    fs
   }
-  fs / (n * h)
+  return(kde)
 }
 
+mykde(xs)
+head(cars)
+attach(cars)
+cars
+dens <- density(speed, bw=1)
+mykde <- hacer_kde(speed, 1, "gaussiano")
+mykde(dens$x)
+dens(xs)
+plot(dens)
+plot(dens$x, mykde(dens$x), type="l")
 speed_range <- range(speed)
 step <- 0.5
 xs <- seq(speed_range[1], speed_range[2], step)
