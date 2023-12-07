@@ -17,7 +17,8 @@ Las clases se darán en el Edificio 0+oo
 ## Links útiles
 - [Campus de la materia](https://campus.exactas.uba.ar/course/view.php?id=3786)
 - [Canal de Discord de la materia](https://discord.gg/jeFnp5Tk)
-
+- [Docu GLMNet](https://glmnet.stanford.edu/articles/glmnet.html)
+- 
 ## Aprendiendo R
 https://cran.r-project.org/doc/contrib/R-intro-1.1.0-espanol.1.pdf
 https://datos.gob.es/es/noticia/cursos-para-aprender-mas-sobre-r
