@@ -3,13 +3,15 @@ title: 'IECD 2C2023: Entrega 1'
 author: "Gonzalo Barrera, Ana Bianco, Pedro Cosatto"
 date: "2023-09-06"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+
 
 
 # Estimación No Paramétrica de la densidad: elección de la ventana 
@@ -34,7 +36,7 @@ $$
 2. (20 ptos.) Para el caso en que la función `bw.loocv` se llama sin valor del parámetro `grilla.h`, asígnele una secuencia de 100 elementos, que cubra un rango de dos órdenes de magnitud alrededor del estimador de Silverman (ver `bw.nrd0`)
 3. (20 ptos.) Escriba un for-loop donde, para cada valor de `grilla.h`,
     a. Para cada índice `i` entre 1 y `length(x)`, genere $\log\hat{f}^{(-i)}_h$, evalúelo en $x_i$ y guarde el resultado.
-    b. Compute el promedio de los valores den (a), que llamaremos $\hat{l}_{h,CV}$.
+    b. Compute el promedio de los valores en (a), que llamaremos $\hat{l}_{h,CV}$.
 4. (15 ptos.) Devuelva una lista con tres elementos:
     - `h.CV`, el valor de `grilla.h` que maximiza la pseudo-logverosimilitud en `x`, 
     - la retícula  `grilla.h` donde maximiza la pseudo-logverosimilitud, 
@@ -68,24 +70,58 @@ Referencia: [notas de Tibshirani](https://www.stat.cmu.edu/~ryantibs/datamining/
 
 
 ```{r}
-bw.loocv <- function(x, grilla.h=NA) {
+hacer_kde <- function(x, h=1) {
+  kde <- function(t) {
+    ret <- vector("numeric", length(t))
+    for (i in seq_along(t)) {
+        ret[i] <- (1 / h) * mean(dnorm((t[i] - x) / h))
+    }
+    return(ret)
+  }
+}
+
+
+bw.loocv <- function(x, grilla.h=NA, n.se=1) {
   if (any(is.na(grilla.h))) {
-    grilla.h <- NA # COMPLETE AQUI
+    grilla.h <- bw.nrd0(x) * exp(seq(-2, 2, length.out=100))
   }
   n.h <- length(grilla.h)
   n.x <- length(x)
-  loglikes <- rep(NA, n.h)
+
+  loglikes <- vector("numeric", n.h)
+  loglikes.se <- vector("numeric", n.h)
   for(j in 1:n.h) {
-    h <- grilla.h[j]
+    h_j <- grilla.h[j]
+    lls = vector("numeric", n.x)  # l(log)l(ikelihood)s de cada estimador LOOCV
     for (i in 1:n.x) {
-      # COMPLETE AQUI
+      loo_kde <- hacer_kde(x[-i], h_j)
+      lls[i] = log(loo_kde(x[i]))
     }
+    loglikes[j] <- mean(lls)
+    loglikes.se[j] <- sd(lls)
   }
-  return(list(h.opt=NA, loglikes=NA))
+  j.opt=which.max(loglikes)
+  h.CV=grilla.h[j.opt]
+  h.nSE=max(
+    grilla.h[
+      loglikes >= loglikes[j.opt] - n.se * loglikes.se[j.opt] / sqrt(n.x)
+    ]
+  )
+  return(
+    list(
+      grilla.h=grilla.h,
+      loglikes=loglikes,
+      loglikes.se=loglikes.se,
+      h.CV=h.CV,
+      h.nSE=h.nSE,
+      n.se=n.se,
+      j.opt=j.opt
+    )
+  )
 }
 
-muestra <- function(seed, n=200) {
-  set.seed(1234)
+muestra <- function(seed=1234, n=200) {
+  set.seed(seed)
   binoms <- rbinom(n, size=1, p=0.75)
   return (
     binoms * rnorm(n, mean=0, sd=1)
@@ -93,4 +129,67 @@ muestra <- function(seed, n=200) {
   )
 }
 write.table(muestra(1234), "entrega1.txt", row.names=FALSE, col.names=FALSE)
+
+```
+
+```{r}
+x <- sort(muestra()) # Por practicidad para graficar, no cambia el resultado.
+ret <- bw.loocv(x)
+hs <- c(nrd0=bw.nrd0(x), SJ=bw.SJ(x), ucv=bw.ucv(x), loocv=ret$h.CV)
+colores <- c(nrd0="blue", SJ="red", ucv="green", loocv="darkorange")
+```
+
+```{r}
+plot(log(ret$grilla.h), ret$loglikes, type="l", ylab="Log-Verosimilitud Media", xlab="log(h)")
+for (name in names(hs)) {
+  abline(v=log(hs[[name]]), col=colores[name])
+}
+etiquetas <- function(hs) { paste0(names(hs), " (h=", round(hs, 3), ")")}
+legend(-2.5, -2.1, legend=etiquetas(hs), col=colores, lty=1, cex=0.8)
+
+```
+
+```{r}
+# 5.a
+su_kde <- density(x)
+sop = su_kde$x # density calcula un soporte conveniente para el kde
+mi_kde <- hacer_kde(x, h=bw.nrd0(x))
+plot(sop, su_kde$y, type="n", xlab="X", ylab="Densidad Estimada",)
+for (name in names(hs)) {
+  lines(sop, hacer_kde(x, hs[[name]])(sop), type="l", col=colores[name])
+}
+legend(3.8, 0.3, legend=etiquetas(hs), col=colores, lty=1, cex=0.8)
+```
+
+```{r}
+ll <- ret$loglikes[ret$j.opt]
+ll.se <- ret$loglikes.se[ret$j.opt]
+n.x <- length(x)
+lls <- c(
+  "loocv"=ll,
+  "1SE"= ll - ll.se / sqrt(n.x),
+  "2SE"= ll - 2 * ll.se / sqrt(n.x)
+)
+hs["1SE"] <- ret$h.nSE
+hs["2SE"] <- bw.loocv(x, n.se=2)$h.nSE
+plot(log(ret$grilla.h), ret$loglikes, type="l", ylab="Log-Verosimilitud Media", xlab="log(h)")
+colores["1SE"] <- "pink"
+colores["2SE"] <- "lightpink"
+for (name in names(hs)) {
+  abline(h=lls[name], col=colores[name], lty=2)
+  abline(v=log(hs[name]), col=colores[name], lty=1)
+}
+legend(x=-2.75, y=-2, legend=etiquetas(hs), col=colores, lty=1, cex=0.8)
+```
+
+```{r}
+# Repito 5.a para todos los estimadores
+su_kde <- density(x)
+sop = su_kde$x # density calcula un soporte conveniente para el kde
+mi_kde <- hacer_kde(x, h=bw.nrd0(x))
+plot(sop, su_kde$y, type="n", xlab="X", ylab="Densidad Estimada")
+for (name in names(hs)) {
+  lines(sop, hacer_kde(x, hs[[name]])(sop), type="l", col=colores[name])
+}
+legend(3.8, 0.3, legend=etiquetas(hs), col=colores, lty=1, cex=0.8)
 ```

@@ -1,0 +1,377 @@
+---
+title: "Taller de Consultoria - TP1"
+author: "Gonzalo Barrera Borla"
+date: "8/25/2019"
+output:
+  pdf_document: default
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE)
+options(tinytex.verbose = TRUE)
+```
+
+# Setup
+```{r, echo=TRUE}
+library(fitdistrplus) # ajuste exploratorio de distribuciones
+library(tidyverse) # manipulación de datos en general, graficos
+library(broom) # limpieza y estructuracion de resultados de regresiones
+```
+
+# Problema 1
+
+> Se dan las duraciones (medidas en ciclos hasta la ruptura) de una muestra de rodamientos (“rulemanes”). Describir las características principales de la muestra (posición, dispersión, asimetría), y buscar una  distribución adecuada.
+
+Los funcionales de locación más habituales son la media $\mu$ y la mediana $\eta$, digamos. Reportamos sus estimadores puntuales muestrales, $\hat{\mu}=\bar{x}=n^{-1}\sum_i x_i$ y $\hat{\eta}=x^{(\frac{n}{2})}$ (donde $x^{(i)}$ denota el i-ésimo elemento de la muestra ordenada). 	Para la dispersión, es razonable usar el la raíz cuadrada del estimador puntual insesgado de la varianza, $s^2=(n-1)^{-1}\sum_i(x_i-\bar{x})^2$. Para la asimetría $\gamma$, construimos el estimador $b$ reemplazando en la definición de $\gamma$ a cada momento por su estimador insesgado:
+
+
+$$
+\gamma=E\left[\left(\frac{X-\mu}{\sigma}\right)^3\right] \quad \Rightarrow \quad \hat{\gamma}=\frac{1}{n}\sum_{i=1}^{n}\left(\frac{x_i-\bar{x}}{s}\right)^3
+$$
+
+
+```{r}
+asimetria <- function(x) {
+  s <- sd(x)
+  x_ <- mean(x) # "x raya"
+  b <- ((x - x_) / s)^3
+  return(mean(b))
+}
+```
+
+```{r}
+df1 <- read_csv("data/1-1.csv")
+df1 %>%
+  summarise(
+    media = mean(duracion),
+    mediana = median(duracion),
+    `dispersión` = sd(duracion),
+    `asimetría` = asimetria(duracion)
+    ) %>%
+  knitr::kable(digits = 3)
+```
+
+Comparamos nuestra funcion de asimetría con la implementación de un paquete bien conocido de R para comprobar su coherencia:
+
+```{r, echo=TRUE}
+casi_iguales <- function(x, y, tol=1e-6) { abs(x-y) <= tol }  
+stopifnot(casi_iguales(
+  e1071::skewness(df1$duracion),
+  asimetria(df1$duracion)))
+```
+
+La distribución más habitual para modelar la vida media de individuos/componentes es la Weibull, que generaliza la bien conocida distribución exponencial para considerar tasas de fallo no necesariamente constantes en el tiempo. Se dice que $X \sim \text{Weibull}(k, \lambda)$ con parámetros de _forma_ $k>0$ y _escala_ $lambda>0$ si la densidad de $X$ está dada por:
+
+$$
+f(x;\lambda,k) =
+\begin{cases}
+\frac{k}{\lambda}\left(\frac{x}{\lambda}\right)^{k-1}e^{-(x/\lambda)^{k}} & x\geq0 ,\\
+0 & x<0,
+\end{cases}
+$$
+
+Nótese que cuando $k=1$, la tasa de fallos es constante, y $X\sim\text{Exp}(\lambda^{-1})$.
+
+El estimador de máxima verosimilitud de $\lambda$ dado $k$ ([referencia](https://en.wikipedia.org/wiki/Weibull_distribution)) es
+
+$$
+\widehat \lambda^k = \frac{1}{n} \sum_{i=1}^n x_i^k
+$$
+
+Mientras el el EMV de $k$ es la solución para $k$ de la siguiente ecuación, que ha de ser encontrado numéricamente:
+$$
+0 = \frac{\sum_{i=1}^n x_i^k \ln x_i }{\sum_{i=1}^n x_i^k }
+    - \frac{1}{k} - \frac{1}{n} \sum_{i=1}^n \ln x_i
+$$
+
+A continuación, implementamos la búsqueda antes descrita y la comparamos con el resultado de una implementación estándar, `fitdistrplus::fitdist`.
+
+```{r, echo=TRUE}
+ajustar_weibull <- function(x, rango_forma = c(0, 10)) {
+  eq_k <- function(x, k){ sum((x^k) * log(x)) / sum(x^k) -1/k -mean(log(x)) }
+  # Busco numéricamente el k que minimiza la distancia a 0 de eq_k
+  k <- optimise(function(k){abs(eq_k(x, k))}, interval = rango_forma)$minimum
+  lambda <- mean(x^k)^(k^-1)
+  return(c(forma = k, escala = lambda))
+}
+```
+
+```{r}
+fd_wei <- fitdistrplus::fitdist(df1$duracion, distr = "weibull", method = "mle")
+yo_wei <- ajustar_weibull(df1$duracion)
+stopifnot(
+  casi_iguales(yo_wei["forma"], fd_wei$estimate["shape"], tol = 2e-4),
+  casi_iguales(yo_wei["escala"], fd_wei$estimate["scale"], tol = 2e-3))
+```
+
+La implementación propia es casi idéntica a la estándar con una diferencia del `r ((yo_wei["forma"] - fd_wei$estimate["shape"])/fd_wei$estimate["shape"] * 100) %>% round(4)`% para el parámetro de forma y `r ((yo_wei["escala"] - fd_wei$estimate["scale"])/fd_wei$estimate["scale"] * 100) %>% round(4)` para el de escala. ¡Nada mal! A continuación, aprovechamos los gráficos por defecto del objeto `fitdist`, en particular el plot cuantial-cuantil ("Q-Q") para convencernos de que el ajuste es decente:
+
+```{r}
+plot(fd_wei)
+```
+
+En conclusión, postulamos que las duraciones $X_i$ de los $i=1,\dots,n$ rodamientos están distribuidas con $X_i \stackrel{iid}{\sim} \text{Weibull}(k=`r yo_wei["forma"] %>% round(3)`, \lambda = `r yo_wei["escala"] %>% round(3)`)$.
+
+
+# Problema 2
+
+> Se dan: el punto de ebullición del agua (PE) (en grados Fahrenheit) y la presión atmosférica (PA) (en pulgadas de mercurio), medidos a distintas alturas en los Alpes. Plantear un modelo que describa cómo varía PE en función de PA. ¿Con cuánta precisión se puede estimar PE en función de PA?. Comentar cualquier característica de los datos.
+
+Aparentemente confiables fuentes en la internet apuntan a que un modelo físico del punto de ebullición del agua con la presión atmosférica se puede derivar de la "relación de Clausius-Clapeyron" ([referencia](https://en.wikipedia.org/wiki/Clausius%E2%80%93Clapeyron_relation)). En particular, a bajas temperaturas (id est, a temperaturas por debajo del [punto crítico](https://en.wikipedia.org/wiki/Critical_point_(thermodynamics)), $647\:\text{K}$ para el agua) y asumiendo que la entalpía de vaporización $L$ del agua permanece constante), dados dos puntos $(P_1, T_1),\:(P_2,T_2)$ en la curva de coexistencia entre agua y vapor, se cumple que:
+$$
+\ln \frac {P_2}{P_1} = -\frac {L}{R} \left ( \frac {1}{T_2} - \frac {1}{T_1} \right )
+$$
+
+donde $R$ es la constante de los gases ideales. Reorganizando un poco los términos obtenemos
+
+
+\begin{align*}
+PE^{-1} &= \frac{R\cdot \ln P_0}{L} + \frac{1}{T_0} - \frac{R}{L} \ln PA \\
+PE^{-1} &= \:b + m\ln PA \text{, digamos}
+\end{align*}
+
+Es decir que existe una relación lineal entre la inversa del punto de ebullición y el logaritmo natural de la presión atmosférica a la que fue medido, donde
+
+
+\begin{align*}
+R &= 8,3145 \text{ J K}^{-1}\text{ mol}^{-1} \quad\quad &\text{es la constante de los gases ideales} \\
+P_0 &= 101.325 \text{ Pa}\quad\quad &\text{es la presión atmosférica estándar} \\
+T_0 &= 373,15 \text{ K} &\text{es el punto de ebullición del agua a } P_0 \\
+L &= 40.608 \text{ J mol}^{-1} &\text{es la entalpía de vaporización del agua}
+\end{align*}
+
+Y los coeficientes correspondientes deberían ser
+
+```{r}
+R <- 8.3145 # J/(K*mol), constante de los gases ideales
+L <- 2256000 # kJ/kg, entalpia de vaporizacion del agua
+mH2O <- 0.018 # kg/mol, masa del agua
+Lmol <- L * mH2O
+P0 <- 101325 # Pa, presión atmosférica de referencia
+T0 <- 373.15 # K, temperatura de ebulicion del agua a P0
+b <- R*log(P0)/Lmol+1/T0
+m <- -R/(Lmol)
+```
+
+
+\begin{align*}
+b &= \frac{R\cdot \ln P_0}{L} + \frac{1}{T_0} &\approx `r signif(b, 4)` \text{ K}^{-1} \\
+m &= \frac{-R}{L}  &\approx `r signif(m, 4)` \text{ K}^{-1}
+\end{align*}
+
+
+Este modelo provee una forma determinística de estimar PE en función de PA, para lo cual ni siquiera hace falta realizar regresión alguna sobre los datos. Al estimar por regresión lineal los coeficientes $b,\:m$, lo que estaremos haciendo no es derivar de cero una relación entre $PE,\:PA$, sino:
+- (a) determinar si los datos recolectados proveen evidencia para el modelo propuesto, o menos arrogantemente, si asumimos correcto el modelo termodinámico,
+- (b) evaluar si la recolección de los datos fue fidedigna.
+
+Al graficar los datos en forma "cruda", se observa que:
+
+- los datos "crudos" parecen seguir una tendencia lineal, y
+- la doceava observación es la única evidentemente por fuera de dicha tendencia.
+
+A continuación entonces, compararemos 4 modelos, surgidos a partir de ajustar (a) un modelo lineal "ingenuo" y (b) el modelo "físico" antedicho, usando (i) todas las observaciones y (ii) todas salvo la #12. Para ello, transformamos las unidadas al estándar internacional (grados Kelvin para temperaturas y Pascales para la presión):
+
+```{r, echo=T}
+inHg_a_Pa <- function(x) {x*3386.39}
+fahrenheit_a_kelvin <- function(x) { (x - 32)*5/9 + 273.15 }
+```
+
+```{r}
+df2 <- read_csv("data/1-2.csv")
+
+df2 <- df2 %>%
+  mutate(
+    id = seq_along(PA),
+    PE = fahrenheit_a_kelvin(PE),
+    PA = inHg_a_Pa(PA),
+    invPE = 1/PE,
+    lnPA = log(PA)) 
+```
+
+
+```{r}
+modelos <- list(
+  lineal = PE ~ PA,
+  fisico = invPE ~ lnPA)
+datos <- list(
+  "con outlier" = df2,
+  "sin outlier" = df2[-12,])
+resumen <- crossing(modelos, datos) %>%
+  mutate(
+    nombre_modelo = c(rep("lineal", 2), rep("fisico", 2)),
+    outliers = rep(c("con outlier", "sin outlier"), 2),
+    llamada_lm = map2(modelos, datos, lm),
+    resumen = map(llamada_lm, broom::glance),
+    b = map(llamada_lm, "coefficients") %>% map_dbl(1),
+    m = map(llamada_lm, "coefficients") %>% map_dbl(2),
+    R2_ajustado = map_dbl(resumen, "adj.r.squared") %>% signif(4),
+    p_valor = map_dbl(resumen, "p.value") %>% signif(4))
+
+resumen %>%
+  select(nombre_modelo, outliers, R2_ajustado, p_valor) %>%
+  knitr::kable(digits=30)
+```
+
+Tanto $R^2_{adj}$ como el p-valor del test de significación global de la regresión son medidas adimensionales de la calidad de ajuste de un modelo, así que es razonable compararlas aún cuando los modelos ajustados tienen distintas unidades. Se observa que 
+
+- tanto el modelo lineal como el físico proveen una muy buena estimación de los valores de PE en función de PA,
+- el modelo físico ajusta mejor que el lineal, se incluya o no la observación 12, y
+- el ajuste del modelo físico mejora espectacularmente al quitarla, mientras que el modelo lineal mejora marginalmente.
+
+Así considerado, podríamos decir que al menos _sobre el soporte de los datos_ tanto el modelo lineal como el físico proveen una aproximaci'on decente del fenómeno, y si no se requiere demasiada exactitud o se vive en 1940 y el poder de cómputo escasea, se puede usar el modelo lineal. Graficando los residuos, sin embargo, se observa claramente que los correspondientes al modelo lineal tienen una clara estructura, se incluya la observación 12 o no. Por su parte, en el modelo físico, salvo por el _outlier_ #12, los residuos no presentan estructura alguna. En ambos casos, eliminar el _outlier_ "centra" mejor los residuos alrededor del 0, sin eliminar la tendencia de los mismos.
+
+```{r}
+predicciones <- resumen %>%
+  mutate(
+    ajuste = map(llamada_lm, augment),
+    PA = map(datos, "PA"),
+    PE = map(datos, "PE"),
+    PEhat = map(ajuste, ".fitted")) %>%
+  select(nombre_modelo, outliers, PA, PE, PEhat) %>%
+  unnest() %>%
+  mutate(
+    PEhat = ifelse(nombre_modelo=="fisico", 1/PEhat, PEhat),
+    resid = PE - PEhat)
+
+predicciones %>%
+  ggplot(aes(PA, resid)) +
+    geom_point() +
+    facet_grid(outliers ~ nombre_modelo, scales = "free")
+```
+
+Al extrapolar los modelos por fuera del soporte de los datos, es evidente por qué la aproximación lineal fue tan buena: ¡los datos fueron tomados exactamente en el rango en que ambos modelos dan predicciones similares!
+
+```{r}
+blin <- filter(resumen, outliers=="sin outlier", nombre_modelo=="lineal")$b
+mlin <- filter(resumen, outliers=="sin outlier", nombre_modelo=="lineal")$m
+bfis <- filter(resumen, outliers=="sin outlier", nombre_modelo=="fisico")$b
+mfis <- filter(resumen, outliers=="sin outlier", nombre_modelo=="fisico")$m
+tibble(
+  PA = seq(P0/3, 1.5*P0, 100),
+  lineal = blin + mlin * PA,
+  fisico = 1/(bfis + mfis * log(PA))) %>%
+  gather(modelo, PE, -PA) %>%
+  ggplot(aes(PA, PE, color = modelo)) +
+  geom_line() +
+  geom_point(data = df2, inherit.aes = F, mapping = aes(PA, PE), shape = "x", size = 2)
+```
+
+Por último, comparemos las constantes calculadas teóricamente con las estimaciones empíricas:
+
+\begin{align*}
+b &\approx `r signif(b, 4)` \text{ K}^{-1},\quad &m \approx `r signif(m, 4)` \text{ K}^{-1} \\
+\hat{b} &\approx `r signif(bfis, 4)` \text{ K}^{-1},\quad &\hat{m} \approx `r signif(mfis, 4)` \text{ K}^{-1}
+\end{align*}
+
+es decir que el ajuste fue casi perfecto. El modelo final, expresado en grados Kelvin y Pascales, será 
+
+$$
+PE = ( `r signif(b, 4)` `r signif(m, 4)` \ln PA)^{-1}
+$$
+
+# Problema 3
+
+> Se investiga el efecto de la presión aplicada durante la manufactura del papel, en el “factor de ruptura” (la fuerza necesaria para desgarrarlo). Bajo cada valor de la presión P, se manufacturó  un lote de papel; de cada lote se eligieron 4 hojas, a cada una de las cuales se midió el factor de ruptura R. Se desea predecir R en función de P.
+
+```{r}
+df3 <- read_csv("data/1-3.csv")
+```
+
+
+Aprovechando que tenemos mediciones repetidas para cada uno de los 5 valores de P, comparamos la raíz cuadrada del estimador global de la varianza $s_0 = `r round(sd(df3$R), 2)`$, con la de los estimadores de la varianza para cada valor de P:
+
+```{r}
+df3 %>%
+  group_by(P) %>%
+  summarise(s = sd(R)) %>%
+  knitr::kable(digits = 2)
+```
+
+Aún con pocos datos, se intuye que la varianza en R no es la misma para todo P. Pareciera haber _heterocedasticidad_, pero la relación entre P y la varianza de R no es lineal: $s$ es máximo para presiones "medias" de fabricación.
+
+Asumiendo que las mediciones de cada par $(P, R)$ son independientes entre sí, la matriz de covarianzas será diagonal, y en vez de utilizar $\Sigma = \sigma^2 \mathrm{I}_n$, podemos considerar una matriz $\Sigma = diag(\sigma_1^2, ..., \sigma_n^2)$, y estimar las varianzas de cada observación, con el estimador insesgado de la varianza para cada nivel de presión antes calculado.
+
+A continuación ajustamos ambos modelos, considerando (a) observaciones iid en general, y matriz de covarianza $\sigma^2 \mathrm{I}_n$, y (b) observaciones iid _en cada nivel de P_, con $\Sigma = diag(\sigma_1^2, ..., \sigma_n^2)$. Este último modelo equivale a realizar un ajuste de mínimos cuadrados pesados, con pesos $w_i = \sigma_i^{-2}$
+
+```{r}
+df3 <-  df3 %>%
+  group_by(P) %>%
+  mutate(s = sd(R))
+
+lm3a <- lm(R ~ P, df3)
+lm3b <- lm(R ~ P, df3, weights = s^-2)
+
+b <- lm3b$coefficients[1] %>% round(2)
+m <- lm3b$coefficients[2] %>% round(2)
+
+map_df(
+  list(ordinario = lm3a, pesado = lm3b),
+  glance, .id = 'modelo') %>%
+  select(modelo, adj.r.squared, p.value) %>%
+  knitr::kable()
+```
+
+Aunque ambos modelos son buenos, el p-valor para la regresión global del segundo modelo es más de 3 órdenes de magnitud más pequeño. La evidencia parece justificar el uso de una regresión pesada. El modelo final quedará
+
+$$
+R = `r b` + `r m` atm^{-1} \times P 
+$$
+
+
+# Problema 4
+
+> La siguiente tabla da, para 12 huevos de gallina, la longitud L (o sea, el mayor diámetro), la mayor sección circular (el mayor diámetro perpendicular a L), ambas en pulgadas;  y el volumen V. Interesa predecir V en función de L y M. 
+
+Preston (1973) ([link](https://sora.unm.edu/sites/default/files/journals/auk/v091n01/p0132-p0138.pdf)) hace un tratamiento bastante exhaustivo de cómo calcular el volumen de un huevo, que a continuación resumimos.
+
+Supongamos que el mayor diámetro de un huevo es $M$, y su largo es $L=a+b$, donde $a,\:b$ son las dos partes en que se divide el largo a la altura del máximo diámetro. El volumen de todo huevo está acotado superiormente por un ciindro perfecto de diámetro $M$, y por debajo por un bicono de máximo diámetro $M$ y alturas $a,\:b$. Si el huevo fuese cilíndrico, su volumen será $\tfrac{\pi}{4}M^2L$, y si fuese bicónico, $\tfrac{\pi}{12}M^2L$. En un escenario más realista e intermedio, en que el huevo está formado por dos medios elipsoides, su volumen es $\tfrac{\pi}{6}M^2L$. Nótese que en ningún caso la asimetría (_id est_, cuán lejos de $L/2$ están $a$ y $b$) hace diferencia alguna, pero sí es clave saber la forma dominante (bicono, elipsoide, cilindro). Los huevos de [colibrí](http://www.fotonatura.org/galerias/fotos/295043/) son más bien romos, casi cilíndricos, mientras que los de [zampullín](https://en.wikipedia.org/wiki/Great_crested_grebe#/media/File:Podiceps_cristatus_MWNH_0106.JPG) son casi bicónicos. En el siguiente gráfico, exhibimos los posibles volúmenes de cada huevo según la suposición de forma:
+
+```{r}
+df4 <- read_csv("data/1-4.csv")
+volumenes <- df4 %>%
+  arrange(V) %>%
+  mutate(
+    real = V,
+    id = seq_along(V),
+    bicono = pi/12 * M^2 * L,
+    elipsoide = pi/6 * M^2 * L,
+    cilindro = pi/4 * M^2 * L) %>%
+  select(id, real, bicono, elipsoide, cilindro) %>%
+  gather(forma, volumen, -id)
+
+volumenes %>%
+  ggplot(aes(id, volumen, color = forma)) +
+  geom_point()
+```
+
+El formato más razonable parece ser un cilindro, así que si el volumen del huevo de gallina está dado por ĺa fórmula $V=kM^2L$, $k\approx\pi/4$. Sin embargo, una simple regresión lineal sobre $M$ y $L$ que incluya un término cuadrático sobre $M$ ya tiene un error cuadrático medio mucho menor que nuestro modelo de huevo cilíndrico:
+```{r}
+lm4a <- lm(V ~ poly(M, 2) + L, df4)
+df4a <- augment(lm4a, data = df4)
+df4a %>%
+  mutate(cilindro = pi/4 * M^2 * L) %>%
+  summarise(
+    "ecm_lm" = mean(.resid^2),
+    ecm_cil = mean((V - cilindro)^2)) %>%
+  knitr::kable(digits = 4)
+```
+
+Una forma directa de mejorar el modelo, es usar una regresión lineal _sin ordenada_, sobre una covariable "sintética", $V = k \times (M^2\cdot L)$ y estimar empíricamente $k$.
+```{r}
+df4 <- df4 %>%
+  mutate(M2L = M^2*L)
+lm4b <- lm(V ~ M2L + 0, df4)
+k <- lm4b$coefficients[1] %>% round(3)
+ecm <- function(lm_call) { mean(lm_call$residuals^2) }
+map_df(
+  list(polinomico = lm4a, fisico = lm4b),
+  glance, .id = 'modelo') %>%
+  select(modelo, adj.r.squared, p.value) %>%
+  knitr::kable(digits = 4)
+```
+
+¡Y cómo mejora! Evidentemente, con un $R^2_{adj}$ tan cercano a 1, algo debemos haber hecho bien. Es interesante notar que si comparásemos los dos modelos según su error cuadrático medio, ,el "polinómico" ingenuo da `r ecm(lm4a) %>% round(4)` y el "físico" basado en una teoría real sobre la forma de los huevos de aves, da `r ecm(lm4b) %>% round(4)`. Las predicciones del modelo polinómico tienen menor error cuadrático medio, pero el modelo físico es tanto más parsimonioso (ajusta 1 sólo parámetro en lugar de 4), que termina siendo ampliamente preferible. Así, concluimos que el mejor modelo para predecir $V$ es $V = `r k`\times M^2 \times L$.
+
+
+
