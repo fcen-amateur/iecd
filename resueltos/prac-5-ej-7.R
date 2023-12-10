@@ -12,4 +12,3 @@ plot(crear_potencia(crit0, n), xlim=c(0, 5))
 abline(v=l0, col="red")
 abline(h=alfa, col="gray")
 curve(crear_potencia(elegir_crit(0.95*l0, n), n)(x), col="blue", add=TRUE)
-      
