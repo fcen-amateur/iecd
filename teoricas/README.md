@@ -1,0 +1,2 @@
+# Clases Teóricas
+El contenido de esta carpeta reproduce la sección "[Clases](https://campus.exactas.uba.ar/course/view.php?id=3786&section=3)" del campus de la materia, salvo error u omisión. Se provee _as-is_, sin ninguna clase de garantía de actualización.

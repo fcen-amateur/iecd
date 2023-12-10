@@ -8,7 +8,7 @@ Estadística (M) - Tópicos de Estadística
   - Predo Cosatto
   - Gonzalo Barrera Borla
 
-## Setup
+## Disposición
 El sitio oficial de la materia es el [campus de la materia](https://campus.exactas.uba.ar/course/view.php?id=3786), pero para conveniencia de quien así lo desee, aquí se encuentran subidas:
 - las diapositivas de las clases teóricas, en `teoricas/`,
 - las tiras de las clases prácticas y las guías de ejercicios en `guias/`,

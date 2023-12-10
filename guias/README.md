@@ -1,0 +1,2 @@
+# Guías de Ejercicios y Tiras Prácticas
+El contenido de esta carpeta reproduce la sección "[Práctica](https://campus.exactas.uba.ar/course/view.php?id=3786&section=4)" del campus de la materia, salvo error u omisión. Se provee _as-is_, sin ninguna clase de garantía de actualización.
