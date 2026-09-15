@@ -1,0 +1,50 @@
+---
+title: "IECD 2C2024 - Clase 10 - Intervalos de Confianza para la Normal"
+author: "Gonzalo Barrera"
+date: "2024-09-16"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Actividad
+
+Consideremos el siguiente escenario abstracto: se desea estimar por intervalos los parámetros de una v.a. con distribución normal $X \sim N(\mu_0, \sigma^2_0)$. A tal fin, se tienen $n$ realizaciones de $X$: $\{ x_1, x_2, \dots, x_n \}$.
+
+1. Escriba una función `ic_mu_sigma2_conocido` que tome tres parámetros:
+  - `x` (obligatorio), el vector con la muestra $\{ x_1, x_2, \dots, x_n \}$,
+  - `sigma2` (obligatorio), el valor de la varianza $\sigma^2$ conocida.
+  - `alfa` (por defecto `0.05`) tal que que $0 < \alpha < 1/2$
+y devuelve un intervalo de confianza _simétrico en cuantiles_ de nivel $ 1 - \alpha$ para $\mu$. El intervalo de confianza debe de ser un vector de tipo `"double"` y longitud 2, con la cota inferior del IC en su primer posición y la cota superior en la segunda.
+
+```{r ic_mu_sigma2_conocido}
+ic_mu_sigma2_conocido <- function(x, var, alfa=0.05) {
+  # Su código aquí
+  # ic <- c(cota_inf, cota_sup)
+  # return(ic)
+}
+```
+
+2. Escriba una función `ic_mu_sigma2_desconocido` siguiendo el patrón de del punto 1, pero sin el parámetro `sigma2`, que deberá ser estimado por la propia función.
+
+3. Escriba una función `ic_sigma2_mu_conocido` que tome tres parámetros:
+  - `x` (obligatorio), el vector con la muestra $\{ x_1, x_2, \dots, x_n \}$,
+  - `mu` (obligatorio), el valor de la media $\mu$ conocida.
+  - `alfa` (por defecto `0.05`) tal que que $0 < \alpha < 1/2$
+y devuelve un intervalo de confianza _simétrico en cuantiles_ de nivel $ 1 - \alpha$ para $\sigma^2$. El intervalo de confianza debe de ser un vector de tipo `"double"` y longitud 2.
+
+4. Escriba una función `ic_sigma2_mu_desconocido` siguiendo el patrón de del punto 3, pero sin el parámetro `mu`, que deberá ser estimado por la propia función.
+
+5. Elija unos valores razonables $(\mu_0, \sigma^2_0)$. Fije también `n_muestra <- 10` y `n_iter <- 1000`. Genere una matriz de dimensión $(n_{iter}, n_{muestra})$ donde cada fila represente una muestra de la v.a. original, con $n = n_{muestra}$.
+
+_Nota: considere usar los comandos `matrix` y `rnorm` en conjunto para generar los datos en una sola línea de código._
+
+6. Para cada una de las funciones de (1) a (4), estime el parámetro relevante a nivel de confianza $0,95$ para cada una de las `n_iter` muestras de (5). Guarde los resultados en 4 matrices de dimensión $(n_{iter}, 2)$: `est_mu_sigma2_conocido, est_mu...`.
+
+7. Calcule el "nivel de cubrimiento empírico", es decir, la proporción de los IICC generados por cada uno de los métodos, que incluye al verdadero parámetro. Qué relación guardan estas proporciones con el "nivel de confianza" $1 - \alpha$? Por qué?
+
+_Nota: Tenga en cuenta que tanto los operadores de comparación numérica `<, <=, ==, >=, >` como los lógicos `|` (OR) y `&` (AND)  trabajan elemento-a-elemento ("element-wise") sobre los vectores (un objeto "primitivo" de **R**), y `mean(vec)` devuelve la proporción de TRUE en `vec` si `typeof(vec) == "logical"` (es booleano). Con todo esto, el cómputo del cubrimiento se reduce a una línea de código._
