@@ -1,0 +1,230 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={IECD 2C2024 - Clase 10 - Intervalos de Confianza para la Normal},
+  pdfauthor={Gonzalo Barrera},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{IECD 2C2024 - Clase 10 - Intervalos de Confianza para la Normal}
+\author{Gonzalo Barrera}
+\date{2024-09-16}
+
+\begin{document}
+\maketitle
+
+\hypertarget{actividad}{%
+\section{Actividad}\label{actividad}}
+
+Consideremos el siguiente escenario abstracto: se desea estimar por
+intervalos los parámetros de una v.a. con distribución normal
+\(X \sim N(\mu_0, \sigma^2_0)\). A tal fin, se tienen \(n\)
+realizaciones de \(X\): \(\{ x_1, x_2, \dots, x_n \}\).
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Escriba una función \texttt{ic\_mu\_sigma2\_conocido} que tome tres
+  parámetros:
+\end{enumerate}
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{x} (obligatorio), el vector con la muestra
+  \(\{ x_1, x_2, \dots, x_n \}\),
+\item
+  \texttt{sigma2} (obligatorio), el valor de la varianza \(\sigma^2\)
+  conocida.
+\item
+  \texttt{alfa} (por defecto \texttt{0.05}) tal que que
+  \(0 < \alpha < 1/2\) y devuelve un intervalo de confianza
+  \emph{simétrico en cuantiles} de nivel \$ 1 - \alpha\$ para \(\mu\).
+  El intervalo de confianza debe de ser un vector de tipo
+  \texttt{"double"} y longitud 2, con la cota inferior del IC en su
+  primer posición y la cota superior en la segunda.
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ic\_mu\_sigma2\_conocido }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x, var, }\AttributeTok{alfa=}\FloatTok{0.05}\NormalTok{) \{}
+  \CommentTok{\# Su código aquí}
+  \CommentTok{\# ic \textless{}{-} c(cota\_inf, cota\_sup)}
+  \CommentTok{\# return(ic)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\item
+  Escriba una función \texttt{ic\_mu\_sigma2\_desconocido} siguiendo el
+  patrón de del punto 1, pero sin el parámetro \texttt{sigma2}, que
+  deberá ser estimado por la propia función.
+\item
+  Escriba una función \texttt{ic\_sigma2\_mu\_conocido} que tome tres
+  parámetros:
+\end{enumerate}
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{x} (obligatorio), el vector con la muestra
+  \(\{ x_1, x_2, \dots, x_n \}\),
+\item
+  \texttt{mu} (obligatorio), el valor de la media \(\mu\) conocida.
+\item
+  \texttt{alfa} (por defecto \texttt{0.05}) tal que que
+  \(0 < \alpha < 1/2\) y devuelve un intervalo de confianza
+  \emph{simétrico en cuantiles} de nivel \$ 1 - \alpha\$ para
+  \(\sigma^2\). El intervalo de confianza debe de ser un vector de tipo
+  \texttt{"double"} y longitud 2.
+\end{itemize}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{3}
+\item
+  Escriba una función \texttt{ic\_sigma2\_mu\_desconocido} siguiendo el
+  patrón de del punto 3, pero sin el parámetro \texttt{mu}, que deberá
+  ser estimado por la propia función.
+\item
+  Elija unos valores razonables \((\mu_0, \sigma^2_0)\). Fije también
+  \texttt{n\_muestra\ \textless{}-\ 10} y
+  \texttt{n\_iter\ \textless{}-\ 1000}. Genere una matriz de dimensión
+  \((n_{iter}, n_{muestra})\) donde cada fila represente una muestra de
+  la v.a. original, con \(n = n_{muestra}\).
+\end{enumerate}
+
+\emph{Nota: considere usar los comandos \texttt{matrix} y \texttt{rnorm}
+en conjunto para generar los datos en una sola línea de código.}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{5}
+\item
+  Para cada una de las funciones de (1) a (4), estime el parámetro
+  relevante a nivel de confianza \(0,95\) para cada una de las
+  \texttt{n\_iter} muestras de (5). Guarde los resultados en 4 matrices
+  de dimensión \((n_{iter}, 2)\):
+  \texttt{est\_mu\_sigma2\_conocido,\ est\_mu...}.
+\item
+  Calcule el ``nivel de cubrimiento empírico'', es decir, la proporción
+  de los IICC generados por cada uno de los métodos, que incluye al
+  verdadero parámetro. Qué relación guardan estas proporciones con el
+  ``nivel de confianza'' \(1 - \alpha\)? Por qué?
+\end{enumerate}
+
+\emph{Nota: Tenga en cuenta que tanto los operadores de comparación
+numérica
+\texttt{\textless{},\ \textless{}=,\ ==,\ \textgreater{}=,\ \textgreater{}}
+como los lógicos \texttt{\textbar{}} (OR) y \texttt{\&} (AND) trabajan
+elemento-a-elemento (``element-wise'') sobre los vectores (un objeto
+``primitivo'' de \textbf{R}), y \texttt{mean(vec)} devuelve la
+proporción de TRUE en \texttt{vec} si
+\texttt{typeof(vec)\ ==\ "logical"} (es booleano). Con todo esto, el
+cómputo del cubrimiento se reduce a una línea de código.}
+
+\end{document}

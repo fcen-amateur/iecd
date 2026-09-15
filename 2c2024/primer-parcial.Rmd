@@ -1,0 +1,37 @@
+---
+title: "Primer Parcial - Ejercicio IC"
+author: "Gonzalo Barrera"
+date: "2024-09-20"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Ejercicio IC Primer Parcial
+
+Muchos fenómenos "del mundo real" que se pueden modelar como el producto de una sucesión de v.a. independientes responden a la distribución Log-Normal, como la presión sanguínea ([Makuch et al, 1979](https://sci-hub.se/https://doi.org/10.1016/0021-9681(79)90070-5)).
+
+Sea $Z \sim \text{Normal}(0, 1)$ una v.a. "normal estándar". Luego, $X = e^{\mu+\sigma Z}$ tiene una distribución $\text{Log-Normal}(\mu, \sigma^2)$. Además, 
+
+
+$$
+\mathbb{E}(X) =\exp \left(\ \mu +{\frac {\sigma ^{2}}{2}}\ \right), \\ 
+\text{Var}(X) =\left[\ \exp(\sigma ^{2})-1\ \right]\ \exp \left(2\ \mu +\sigma ^{2}\right)
+$$
+En un estudio clínico se midió la presión sistólica en reposo de 12 adultos varones entre 18 y 34 años. Los resultados, expresados en mmHg, fueron:
+
+$77.3\ \ 105.8\ \ 104.9\ \ 102.5\ \ 88\ \ 118\ \ 104.5\ \ 103.9\ \ 143.5\ \ 103.9\ \ 93.8\ \ 96.1$
+
+1. Asumiendo que la presión del i-ésimo sujeto del estudio tiene distribución $X_i \sim \text{Log-Normal}(\mu, \sigma^2)\  \forall \ i \in \{1,\dots, n\}$, provea intervalos de confianza de nivel $0,99$ para ambos parámetros. Enuncie cualquier supuesto necesario para su construcción.
+
+2. ¿Qué tamaño de muestra sería necesario para reducir a la mitad la longitud del IC para $\mu$? ¿Por qué?
+
+3. Con la información disponible, ¿Es posible proveer un intervalo de confianza de nivel $0,99$ para $\mathbb{E}(X_i)$? ¿Por qué?
+
+4. Suponga que de estudios previos, se conoce que $\sigma^2$ (el desvío estándar de la presión sistólica _en escala logarítmica_) es de $0.0184$. Con esta información,
+  a. Si contestó "Sí" a (3), ¿Puede ofrecer un intervalo "mejor" (léaase, más corto con igual nivel de confianza)? o
+  b. Si contestó "No" a (3), ¿Puede ahora ofrecer el intervalo de confianza requerido para $\mathbb{E}(X_i)$?

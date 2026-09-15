@@ -1,0 +1,219 @@
+---
+title: "IECD 2C2024 - Clase 2 - QQ Plots"
+author: "Gonzalo Barrera"
+date: "2024-08-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Actividad
+0. Descubra la humanidad en el ser más cercano a usted. Pregúntele su nombre si no lo sabe, si tiene mascotas y cuál es su helado favorito. Realicen juntos las actividades siguientes, alentándose mutuamente, durante 30 minutos. Anoten sus dudas y triunfos como para compartir durante la exposición posterior de la cátedra.
+1.
+  a. Escriba una función `mi_qqnorm`, que tome como único parámetro un vector numérico `x`, y genere un gráfico idéntico al que resulta al llamar `qqnorm(x)`.
+  b. En un único plot, realice dos subplots: `qqnorm(slong)` y `mi_qqnorm(slong)`, donde `slong` contiene la longitud de los sépalos de la especie "setosa" de flores `iris`.
+2.
+  a. Realice el mismo gráfico, pero utlizando la librería `ggplot2`. Sugerencia: utilice la geometría `geom_qq`.
+  b. Encadenando comandos de las librerías del `tidyverse` y `ggplot2`, parta del dataset `iris` y genere el mismo gráfico que en (1a). Sugerencia: considere el operador "cañería" `%>%`.
+3. Agregue un parámetro opcional `linea` a la función `mi_qqnorm`, por defecto falso, que cuando se setea a `TRUE`, agregue una recta idéntica a la que `qqline` añade a `qqnorm`. Sugerencia: considere la función `abline` y el control de flujo `if (condicion) { ... }`.
+4. Usando `ggplot2`, realice un gráfico cuantil-cuantil normal, de la longitud de sépalo _de las tres especies a la vez_, con su correspondiente leyenda. Interprete. Sugerencia: considere el parámetro `color` al definir el "mapeo de estéticas" del gráfico.
+
+
+# Exposición
+
+## QQ Plot, el gráfico que llora
+
+De [Wikipedia](https://en.wikipedia.org/wiki/Q%E2%80%93Q_plot)
+> In statistics, a Q–Q plot (quantile–quantile plot) is a probability plot, a graphical method for comparing two probability distributions by plotting their quantiles against each other.
+
+En el fondo es un gráfico de dispersión (_scatterplot_) para los _cuantiles_ de dos distribuciones, teóricas o empíricas (aunque usualmente al menos una será empírica.
+
+```{r}
+head(iris)
+c(1,2,3,4)[c(TRUE, FALSE, FALSE, TRUE)]
+
+
+long <- iris$Sepal.Length
+slong <- long[iris$Species == "setosa"]
+mean(iris$Sepal.Length[iris$Species == "setosa"])
+vlong <- long[iris$Species == "virginica"]
+
+plot(sort(slong), sort(vlong))
+abline(a=0, b=1)
+```
+
+## `qqnorm`: ¿tienen pinta de normales estos datos?
+
+```{r}
+qqnorm(slong)
+```
+
+Nótese que el eje $x$ tiene cuantiles _teóricos_, y el eje $y$ tiene cuantiles _muestrales_ (o empíricos). Estamos comparando una distribución empírica (cuya "verdadera" distribución desconocemos) con una distribución teórica, en este caso la normal.
+
+```{r}
+qqnorm(slong)
+qqline(slong)
+```
+
+## Pero, ¿qué es un cuantil, en serio?
+Conocemos distintas maneras de describir una v.a. $X$: su función de densidad (o probabilidad) $f$ (AKA `pdf`), su función de distribución (acumulada) $F$, su función característica...
+
+La función de _cuantiles_ (llamémosla $Q$) es la _inversa_ de la función de distribución:
+$$
+Q(t) = s \iff F(s) = t
+$$
+
+### Para otro día `ecdf`: función de distribución empírica
+
+```{r}
+F_slong <- ecdf(slong)
+q <- 5.1
+F_slong(q)
+mean(slong <= q)
+```
+
+¿Pero como escribo "la inversa" de `ecdf`? Una versión sencilla: evaluarla únicamente en los puntos conocidos:
+
+```{r}
+cuantiles <- sort(slong)
+n <- length(slong)
+names(cuantiles) <- 1:n / n
+cuantiles["0.50"]
+```
+
+Medio trucho, ¿no? 
+**Tarea para el hogar: escriba una función `Q_empirica(x)`, que dada una muestra `x` devuelva la función de cuantiles empíricos correspondiente a `x`.**
+Pregunta para la clase: ¿es necesario tanto? ¿Qué cuantiles empíricos ya conocemos? ¿Y qué cuantiles teóricos necesitamos conocer?
+
+### `[q|d|p|r]norm`: operando con variables aleatorias en `R`
+
+Sea `<dist>` el nombre de una distribución (`norm`al, `exp`onencial, `unif`orme, et cetera) en R. Luego,
+- `d<dist>` representa su función de _densidad_ $f$ (`pdf`)
+- `p<dist>`, su función de _distribución_ $F$ (`cdf`)
+- `q<dist>`, su función de _cuantiles_ $Q$ (`ppf`)
+- `r<dist>`, su función generadora aleatoria (`rvs`)
+
+```{r}
+help(qunif)
+```
+
+```{r}
+ruido <- runif(length(slong), -0.25 * sd(slong), 0.25 * sd(slong))
+qqnorm(slong + ruido)
+qqline(slong + ruido)
+```
+
+## Reproduciendo `qqnorm`
+
+```{r}
+help(qqnorm)
+```
+
+### `ppoints`: Los cuantiles empíricos están _enfermos_ (ill-defined)
+
+```{r}
+help(quantile)
+
+require(graphics)
+p.ppoints <- function(n, ..., add = FALSE, col = par("col")) {
+  pn <- ppoints(n, ...)
+  if(add)
+    points(pn, pn, col = col)
+  else {
+    tit <- match.call(); tit[[1]] <- quote(ppoints)
+    plot(pn,pn, main = deparse(tit), col=col,
+         xlim = 0:1, ylim = 0:1, xaxs = "i", yaxs = "i")
+    abline(0, 1, col = adjustcolor(1, 1/4), lty = 3)
+  }
+  if(!add && requireNamespace("MASS", quietly = TRUE))
+    text(pn, pn, as.character(MASS::fractions(pn)),
+         adj = c(0,0)-1/4, cex = 3/4, xpd = NA, col=col)
+  abline(h = pn, v = pn, col = adjustcolor(col, 1/2), lty = 2, lwd = 1/2)
+}
+
+p.ppoints(4)
+p.ppoints(10)
+p.ppoints(10, a = 1/2)
+p.ppoints(21)
+p.ppoints(8) ; p.ppoints(8, a = 1/2, add=TRUE, col="tomato")
+```
+
+Cuando $a = 1/2$, ppoints se simplifica a $\dfrac{2 \times (1:n) - 1}{2n}$
+
+
+```{r}
+n <- length(slong)
+mis_ppoints <- (2*(1:n) - 1) / (2*n)
+R_ppoints <- ppoints(n, a=1/2)
+quantile(slong, probs=ppoints(n, a=1/2), type=5)
+stopifnot(all(mis_ppoints == R_ppoints))
+mis_ppoints
+```
+
+## Ahora sí, una primera versión
+```{r}
+qqnorm(slong)
+plot(
+    x=sort(slong), y=qnorm((2*(1:length(slong)) - 1) / (2*length(slong)))
+)
+plot(
+    y=sort(slong), x=qnorm((2*(1:length(slong)) - 1) / (2*length(slong)))
+)
+```
+
+Un poco más prolijo:
+- DRY ("don't repeat yourself"): si una cantidad la necesito dos veces, se asigna a una variable y se reusa,
+- los ejes están invertidos
+- los nombres de los ejes no son informativos
+- no tiene título
+
+```{r}
+mi_qqnorm <- function(x) {
+  n <- length(x)
+  plot(
+    x=qnorm((2*(1:n) - 1) / (2*n)),
+    y=sort(x),
+    main="Mi Q-Q Plot Normal",
+    xlab="Theoretical Quantiles",
+    ylab="Sample Quantiles"
+  )
+}
+
+par(mfrow = c(1, 2))
+qqnorm(slong)
+mi_qqnorm(slong)
+```
+
+Hermanxs, hemos compartido la práctica, pueden ir en paz.
+
+## Chapoteando en el tidyverse con un flota flota de Internet
+Una heurística para _aprender_ y no sólo _reproducir_:
+- **SÍ** lean la documentación oficial
+- **SÍ** aprendan a buscar en Google (sugerencia: StackOverflow hasta Diciembre 2022)
+- **NO** usen ChatGPT/Copilot/LLMs sin chequear por triplicado. Y aun así, duden.
+
+Todo lo que tienen que saber de R de acá a que se reciban (y más de lo que saben sus profesores, quien les habla incluido):
+- [Hands-On Programming With R](https://rstudio-education.github.io/hopr/)
+- [R for Data Science (en)](https://r4ds.hadley.nz/)
+- [R para Ciencia de Datos (es)](https://es.r4ds.hadley.nz/)
+- [Tidyverse](https://www.tidyverse.org/)
+- [ggplot2: Elegant Graphics for Data Analysis (3e)](https://ggplot2-book.org/)
+- [Tidy Modeling with R](https://www.tmwr.org/)
+
+```{r}
+# install.packages(c("ggplot2", "tidyverse"))
+# https://ggplot2.tidyverse.org/articles/ggplot2.html
+library(tidyverse)
+
+mean(iris$Sepal.Length[iris$Species == "setosa"])
+
+tibble(iris) %>%
+  filter(Species == "setosa") %>%
+  select(Sepal.Length) %>%
+  mutate(x=Sepal.Length + ruido) %>%
+  ggplot(aes(sample=x)) +
+  geom_qq() +
+  geom_qq_line()
+```
