@@ -660,7 +660,6 @@ Cuando $n = 4$ por ejemplo, resulta que
     [15], [${{1, 2, 3, 4, 5}}$], [1], [1/32],
   ))]
 ]
-]
 #prg("5 pts.")[Muestre que #TT es simétrica alrededor de $n(n+1)/ 4$]
 
 #rtao[Sólo de observar las tablas, vemos que cuando $n=4$, #TT es simétrica alrededor de $5 = (4 (4 + 1)) / 4$ y cuando $n = 5$, #TT es simétrica alrededor de $7.5 = (5 (5+ 1))/4$. 
